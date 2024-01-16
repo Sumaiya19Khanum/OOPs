@@ -1,0 +1,142 @@
+from abc import ABC, abstractmethod
+from enum import Enum
+from typing import List, Tuple
+import pygame
+
+class Direction(Enum):
+  UP = 0
+  DOWN = 1
+  LEFT = 2
+  RIGHT = 3
+
+class GameObject(ABC):
+  def __init__(self, x, y):
+    self._x = x
+    self._y = y
+
+  @property
+  def x(self):
+    return self._x
+
+  @x.setter
+  def x(self, value):
+    self._x = value
+
+  @property
+  def y(self):
+    return self._y
+
+  @y.setter
+  def y(self, value):
+    self._y = value
+
+  @abstractmethod
+  def update(self, dt):
+    pass
+
+  @abstractmethod
+  def draw(self, screen):
+    pass
+
+class Player(GameObject):
+  def __init__(self, x, y):
+    super().__init__(x, y)
+    self._speed = 5
+    self._direction = Direction.RIGHT
+
+  def update(self, dt):
+    if self._direction == Direction.UP:
+      self._y -= self._speed * dt
+    elif self._direction == Direction.DOWN:
+      self._y += self._speed * dt
+    elif self._direction == Direction.LEFT:
+      self._x -= self._speed * dt
+    elif self._direction == Direction.RIGHT:
+      self._x += self._speed * dt
+
+  def draw(self, screen):
+    screen.fill((255, 0, 0), (self._x, self._y, 10, 10))
+
+class Enemy(GameObject):
+  def __init__(self, x, y):
+    super().__init__(x, y)
+    self._speed = 2
+    self._direction = Direction.LEFT
+
+  def update(self, dt):
+    if self._direction == Direction.UP:
+      self._y -= self._speed * dt
+    elif self._direction == Direction.DOWN:
+      self._y += self._speed * dt
+    elif self._direction == Direction.LEFT:
+      self._x -= self._speed * dt
+    elif self._direction == Direction.RIGHT:
+      self._x += self._speed * dt
+
+  def draw(self, screen):
+    screen.fill((0, 255, 0), (self._x, self._y, 10, 10))
+
+class PowerUp(GameObject):
+  class Type(Enum):
+    SPEED_BOOST = 0
+    HEALTH_BOOST = 1
+
+  def __init__(self, x, y):
+    super().__init__(x, y)
+    self._type = PowerUp.Type.SPEED_BOOST
+
+  def update(self, dt):
+    pass
+
+  def draw(self, screen):
+    screen.fill((0, 0, 255), (self._x, self._y, 10, 10))
+
+
+class Game:
+  def __init__(self, width, height):
+    self._width = width
+    self._height = height
+    self._objects: List[GameObject] = []
+    self._player = Player(width // 2, height // 2)
+    self._objects.append(self._player)
+    self._enemy = Enemy(width // 4, height // 4)
+    self._objects.append(self._enemy)
+    self._power_up = PowerUp(width // 2, height // 2)
+    self._objects.append(self._power_up)
+
+  def update(self, dt):
+    for object in self._objects:
+      object.update(dt)
+
+  def draw(self, screen):
+    screen.fill((0, 0, 0))
+    for object in self._objects:
+      object.draw(screen)
+
+  def handle_input(self, event):
+    if event.type == pygame.KEYDOWN:
+      if event.key == pygame.K_UP:
+        self._player._direction = Direction.UP
+      elif event.key == pygame.K_DOWN:
+        self._player._direction = Direction.DOWN
+      elif event.key == pygame.K_LEFT:
+        self._player._direction = Direction.LEFT
+      elif event.key == pygame.K_RIGHT:
+        self._player._direction = Direction.RIGHT
+
+  def run(self):
+    pygame.init()
+    screen = pygame.display.set_mode((self._width, self._height))
+    clock = pygame.time.Clock()
+
+    while True:
+      dt = clock.tick(60) / 1000.0
+      for event in pygame.event.get():
+        self.handle_input(event)
+      self.update(dt)
+      self.draw(screen)
+      pygame.display.flip()
+
+if __name__ == "__main__":
+  game = Game(800, 600)
+  game.run()
